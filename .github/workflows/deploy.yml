@@ -25,9 +25,27 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ap-south-1
 
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
+
+      - name: Create deployment package
+        run: |
+          zip -r application.zip app model requirements.txt Procfile
+
+      - name: Upload application version
+        run: |
+          aws s3 cp application.zip \
+            s3://elasticbeanstalk-ap-south-1-${{ secrets.AWS_ACCOUNT_ID }}/customer-churn-${{ github.sha }}.zip
+
+      - name: Create application version
+        run: |
+          aws elasticbeanstalk create-application-version \
+            --application-name "Customer_churn_prediction" \
+            --version-label "release-${{ github.sha }}" \
+            --source-bundle S3Bucket="elasticbeanstalk-ap-south-1-${{ secrets.AWS_ACCOUNT_ID }}",S3Key="customer-churn-${{ github.sha }}.zip"
+
       - name: Deploy to Elastic Beanstalk
-        uses: aws-actions/aws-elasticbeanstalk-deploy@v1
-        with:
-          aws-region: ap-south-1
-          application-name: Customer_churn_prediction
-          environment-name: customerchurnprediction-env
+        run: |
+          aws elasticbeanstalk update-environment \
+            --environment-name customerchurnprediction-env \
+            --version-label "release-${{ github.sha }}"
