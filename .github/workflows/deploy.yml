@@ -41,11 +41,11 @@ jobs:
         run: |
           aws elasticbeanstalk create-application-version \
             --application-name "Customer_churn_prediction" \
-            --version-label "release-${{ github.sha }}" \
+            --version-label "release-${{ github.run_id }}-${{ github.run_attempt }}" \
             --source-bundle S3Bucket="elasticbeanstalk-ap-south-1-${{ secrets.AWS_ACCOUNT_ID }}",S3Key="customer-churn-${{ github.sha }}.zip"
 
       - name: Deploy to Elastic Beanstalk
         run: |
           aws elasticbeanstalk update-environment \
             --environment-name customerchurnprediction-env \
-            --version-label "release-${{ github.sha }}"
+            --version-label "release-${{ github.run_id }}-${{ github.run_attempt }}"
